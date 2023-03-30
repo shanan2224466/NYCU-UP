@@ -1,6 +1,7 @@
 # Homework #1
 ## Advanced Programming in the UNIX Environment
 Due: March 21March 29, 2022, Prof: Chun-Ying Huang
+
 Read carefully before you implement and submit your homework.
 ### Implement a 'lsof'-like program
 In this homework, you have to implement the 'lsof' tool by yourself. 'lsof' is a tool to list open files. It can be used to list all the files opened by processes running in the system. The output of your homework is required to follow the spec strictly. The TAs will use the 'diff' tool to compare your output directly against our prepared sample test data.
@@ -64,13 +65,17 @@ The detailed spec of this homework is introduced as follows. Your program has to
     - `DIR` : a directory. `cwd` and `rtd` are also classified as this type.
     - `REG` : a regular file
     - `CHR` : a character special file, for example
+
         `crw-rw-rw- 1 root root 1, 3 Mar 17 17:31 /dev/null`
     - `FIFO` : a pipe, for example
         A link to a pipe, e.g.,
+
         `lr-x------ 1 root root 64 Mar 17 19:55 5 -> 'pipe:[138394]'`
         A file with p type (FIFO)
+
         `prw------- 1 root root 0 Mar 17 19:54 /run/systemd/inhibit/11.ref`
     - `SOCK` : a socket, for example
+	
         `lrwx------ 1 root root 64 Mar 17 19:55 1 -> 'socket:[136975]'`
     - `unknown` : Any other unlisted types. Alternatively, if a file has been deleted or is not accessible (e.g., permission denied), this column can show unknown.
 - `NODE` :
