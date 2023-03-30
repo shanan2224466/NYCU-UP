@@ -47,12 +47,9 @@ bool compare(string s, string filter) {
 }
 
 void print_result(string COMMAND, string PID, string USER, string FD, string TYPE, string NODE, string NAME) {
-    // if (COMMAND.empty() || PID.empty() || USER.empty() || FD.empty() || TYPE.empty() || NODE.empty() || NAME.empty()) {
-    //     return;
-    // }
     cout << left << setw(5) << COMMAND << right << setw(10) << PID << setw(15) <<
-            USER << setw(10) << FD << setw(15) << TYPE << setw(10) << NODE <<
-            left << setw(50) << NAME << endl;
+            USER << setw(10) << FD << setw(15) << TYPE << setw(20) << NODE <<
+            "  " << left << setw(50) << NAME << endl;
 }
 
 string get_command(string path) {
@@ -90,6 +87,30 @@ string get_user(string path) {
     return pwd->pw_name;
 }
 
+string get_node(string path, string dir) {
+    string pathname = path + "/" + dir;
+    struct stat file_stat;
+    if (lstat(pathname.c_str(), &file_stat) == -1) {
+        // return "";
+        perror("lstat");
+        exit(errno);
+    }
+    if (S_ISLNK(file_stat.st_mode)) {
+        char target[256];
+        memset(target, 0, sizeof(target));
+        if (readlink(pathname.c_str(), target, sizeof(target)) == -1) {
+            return "";
+        }
+        struct stat target_stat;
+        if (lstat(target, &target_stat) == -1) {
+            perror("lstat");
+            exit(errno);
+        }
+        file_stat = target_stat;
+    }
+    return to_string(file_stat.st_ino);
+}
+
 string get_type(string path, string dir) {
     string pathname = path + "/" + dir;
     struct stat file_stat;
@@ -98,7 +119,6 @@ string get_type(string path, string dir) {
         exit(errno);
     }
     if (S_ISLNK(file_stat.st_mode)) {
-        // handle symbolic links
         char target[256];
         memset(target, 0, sizeof(target));
         if (readlink(pathname.c_str(), target, sizeof(target)) == -1) {
@@ -126,7 +146,6 @@ string get_type(string path, string dir) {
             return "unknown";
     }
 }
-
 
 string get_name(string path, string dir) {
     string pathname = path + "/" + dir;
@@ -168,23 +187,27 @@ string get_name(string path, string dir) {
             return "";
         }
     }
+    return "";
 }
 
 void get_fd(struct Filter filter, struct File file, string path, string fd_dir) {
     if (fd_dir == "cwd") {
         file.FD = "cwd";
+        file.NODE = get_node(path, fd_dir);
         file.NAME = get_name(path, fd_dir);
         file.TYPE = get_type(path, fd_dir);
         print_result(file.COMMAND, file.PID, file.USER, file.FD, file.TYPE, file.NODE, file.NAME);
     }
     else if (fd_dir == "root") {
         file.FD = "rtd";
+        file.NODE = get_node(path, fd_dir);
         file.NAME = get_name(path, fd_dir);
         file.TYPE = get_type(path, fd_dir);
         print_result(file.COMMAND, file.PID, file.USER, file.FD, file.TYPE, file.NODE, file.NAME);
     }
     else if (fd_dir == "exe") {
         file.FD = "txt";
+        file.NODE = get_node(path, fd_dir);
         file.NAME = get_name(path, fd_dir);
         file.TYPE = get_type(path, fd_dir);
         print_result(file.COMMAND, file.PID, file.USER, file.FD, file.TYPE, file.NODE, file.NAME);
@@ -225,6 +248,7 @@ void get_fd(struct Filter filter, struct File file, string path, string fd_dir) 
                 else if ((file_stat.st_mode) & S_IWUSR) {
                     file.FD = string(diread->d_name) + "w";
                 }
+                file.NODE = get_node(pathname, diread->d_name);
                 file.NAME = get_name(pathname, diread->d_name);
                 file.TYPE = get_type(pathname, diread->d_name);
                 print_result(file.COMMAND, file.PID, file.USER, file.FD, file.TYPE, file.NODE, file.NAME);
@@ -308,7 +332,7 @@ int main(int argc, char* argv[]) {
         }
         arg = match.suffix();
     }
-    print_result("COMMAND", "PID  ", "USER  ", "FD  ", "TYPE  ", "NODE   ", "\b\bNAME");
+    print_result("COMMAND", "\bPID", "USER", "FD", "TYPE", "NODE", "NAME");
     // cout << "COMMAND" << setw(10) << "PID" << setw(15) <<
     //         "USER" << setw(10) << "FD" << setw(10) <<
     //         "TYPE" << setw(10) << "NODE" << setw(40) <<
