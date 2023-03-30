@@ -71,11 +71,12 @@ The detailed spec of this homework is introduced as follows. Your program has to
         A link to a pipe, e.g.,
 
         `lr-x------ 1 root root 64 Mar 17 19:55 5 -> 'pipe:[138394]'`
+
         A file with p type (FIFO)
 
         `prw------- 1 root root 0 Mar 17 19:54 /run/systemd/inhibit/11.ref`
     - `SOCK` : a socket, for example
-	
+
         `lrwx------ 1 root root 64 Mar 17 19:55 1 -> 'socket:[136975]'`
     - `unknown` : Any other unlisted types. Alternatively, if a file has been deleted or is not accessible (e.g., permission denied), this column can show unknown.
 - `NODE` :
@@ -84,8 +85,10 @@ The detailed spec of this homework is introduced as follows. Your program has to
 - `NAME` :
     - Show the opened filename if it is a typical file or directory.
     - Show `pipe:[node number]` if it is a symbolic file to a pipe, e.g.,
+
         `l-wx------ 1 ta ta 64 三 8 02:11 91 -> 'pipe:[2669735]'`
     - Show socket:[node number] if it is a symbolic file to a socket, e.g.,
+	
         `lrwx------ 1 ta ta 64 三 8 02:11 51 -> 'socket:[2669792]'`
     - Append ` (Permission denied)` if the access to `/proc/pid/fd` or `/proc/pid/(cwd|root|exe)` is failed due to permission denied.
     - If the filename you read from /proc file system contains a (deleted) , please remove it from the filename before you print it out.
