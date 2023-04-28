@@ -1,6 +1,6 @@
 # Homework #1
 ## Advanced Programming in the UNIX Environment
-Due: March 21March 29, 2022, Prof: Chun-Ying Huang
+Due: March 29, 2022, Prof: Chun-Ying Huang
 
 Read carefully before you implement and submit your homework.
 ### Implement a 'lsof'-like program
