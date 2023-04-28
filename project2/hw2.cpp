@@ -43,9 +43,8 @@ int main(int argc, char *argv[]){
         }
     }
 
-    for (int i = args_index, j = 0; i < argc; i++) {
+    for (int i = args_index, j = 0; i < argc; i++)
         args[j++] = argv[i];
-    }
     args[argc - args_index + 1] = NULL;
 
     if (strcmp(file, "") == 0) {
@@ -61,9 +60,8 @@ int main(int argc, char *argv[]){
         execvp(args[0], args);
         exit(errno);
     }
-    else if (pid > 0) {
+    else if (pid > 0)
         wait(NULL);
-    }
 
     return 0;
 }
