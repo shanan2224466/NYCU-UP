@@ -32,9 +32,11 @@ usage: ./logger [-o file] [-p sopath] [--] cmd [cmd args ...]
 If an invalid argument is passed to the logger, the above message should be displayed.
 #### Monitored file access activities
 The list of monitored library calls is shown below. It covers several functions we have introduced in the class.
-
+```
 chmod    chown    close     creat     fclose     fopen    fread    fwrite
 open     read     remove    rename    tmpfile    write
+```
+
 #### Output
 You have to dump the library calls as well as the corresponding parameters and the return value. We have several special rules for printing out function arguments and return values:
 - If a passed argument is a filename string, print the real absolute path of the file by using `realpath(3)` .
