@@ -115,9 +115,13 @@ There will be three advance test cases, each worth 10 points.
 #### Hints
 This might be a relatively difficult homework, so we have several hints for this homework. Reading these hints carefully may reduce your efforts to implement this homework.
 1. x86_64 system call table: It should be easy for you to find one on Internet. Here is the one we demonstrated in the course (x86_64 syscall table).
+
 2. If you need precise prototypes for system calls, you may refer to an online Linux cross reference (LXR) site. For example, this page shows the official prototypes form the linux kernel (include/linux/syscalls.h).
+
 3. You will have to define all the required data structures and constants by yourself. If you do not know how to define a data structure, try to find them from the Linux kernel source codes.
+
 4. With LXR, you may also check how a system call is implemented, especially when an error code is returned from a system call. For example, here is the implementation for sys_rt_sigaction system call in the kernel. By reading the codes, you would know that passing an incorrect sigset_t size would lead to a negative EINVAL error code.
+
 5. For implementing setjmp with a preserved process signal mask, the recommended data structure for x86_64 is given below:
 ```
 typedef struct jmp_buf_s {
@@ -126,6 +130,7 @@ sigset_t mask;
 } jmp_buf[1];
 ```
 The minimal eight 64-bit values you have to preserve in the reg array are: RBX, RSP, RBP, R12, R13, R14, R15, and the return address (to the caller of setjmp). The current process signal mask can be preserved in the mask field.
+
 6. To ensure that a signal handler can be properly called without crashing a process, you have to do the following additional setup in your implemented sigaction function as follows (illustrated in C language):
 ```
 long sigaction(int how, struct sigaction *nact, struct sigaction *oact) {
@@ -137,11 +142,14 @@ ret = sys_rt_sigaction(how, nact, oact, sizeof(sigset_t));
 }
 ```
 The implementation of the __myrt function is simply making a system call to sigreturn (rax = 15).
+
 7. Please notice that the sigaction data structure used in the C library may be different from that used in the kernel. If the user space and the kernel space data structure are inconsistent, you will have to perform the convertion in your wrapper functions.
+
 8. The assembly instructions we used in this homework are pretty simple. All the required instructions have been introduced in the class. Here we enumerate the possible required assembly instructions for this homework.
 ```
 add call cmp inc jge jmp jne
 jnz lea mov neg or pop push
 ret sub syscall xor
 ```
+
 9. Please ensure that your header file (libmini.h) exports additional required macros, constants, data types, and function prototypes. You may refer to this file to see what are the minimal requirements that would be used in the sample test codes.
