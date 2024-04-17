@@ -4,18 +4,18 @@ Due: May 20, 2022, Prof: Chun-Ying Huang
 
 ### Extend the Mini Lib C to Handle Signals
 In this homework, you have to extend the mini C library introduced in the class to support signal relevant system calls. You have to implement the following C library functions in Assembly and C using the syntax supported by yasm x86_64 assembler.
-    1. setjmp: prepare for long jump by saving the current CPU state. In addition, preserve the signal mask of the current process.
-    2. longjmp: perform the long jump by restoring a saved CPU state. In addition, restore the preserved signal mask.
-    3. signal and sigaction: setup the handler of a signal.
-    4. sigprocmask: can be used to block/unblock signals, and get/set the current signal mask.
-    5. sigpending: check if there is any pending signal.
-    6. alarm: setup a timer for the current process.
-    7. write: write to a file descriptor.
-    8. pause: wait for signal
-    9. sleep: sleep for a specified number of seconds
-    10. exit: cause normal process termination
-    11. strlen: calculate the length of the string, excluding the terminating null byte ('\0').
-    12. functions to handle sigset_t data type: sigemptyset, sigfillset, sigaddset, sigdelset, and sigismember.
+1. setjmp: prepare for long jump by saving the current CPU state. In addition, preserve the signal mask of the current process.
+2. longjmp: perform the long jump by restoring a saved CPU state. In addition, restore the preserved signal mask.
+3. signal and sigaction: setup the handler of a signal.
+4. sigprocmask: can be used to block/unblock signals, and get/set the current signal mask.
+5. sigpending: check if there is any pending signal.
+6. alarm: setup a timer for the current process.
+7. write: write to a file descriptor.
+8. pause: wait for signal
+9. sleep: sleep for a specified number of seconds
+10. exit: cause normal process termination
+11. strlen: calculate the length of the string, excluding the terminating null byte ('\0').
+12. functions to handle sigset_t data type: sigemptyset, sigfillset, sigaddset, sigdelset, and sigismember.
 The API interface is the same to what we have in the standard C library. However, because we are attempting to replace the standard C library, our test codes will only be linked against the library implemented in this homework. We will use the following commands to assemble, compile, link, and test your implementation.
 ```
 $ make # Use your provided Makefile to generate `libmini.so`
