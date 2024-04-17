@@ -125,8 +125,8 @@ This might be a relatively difficult homework, so we have several hints for this
 5. For implementing setjmp with a preserved process signal mask, the recommended data structure for x86_64 is given below:
 ```
 typedef struct jmp_buf_s {
-long long reg[8];
-sigset_t mask;
+    long long reg[8];
+    sigset_t mask;
 } jmp_buf[1];
 ```
 The minimal eight 64-bit values you have to preserve in the reg array are: RBX, RSP, RBP, R12, R13, R14, R15, and the return address (to the caller of setjmp). The current process signal mask can be preserved in the mask field.
@@ -134,11 +134,11 @@ The minimal eight 64-bit values you have to preserve in the reg array are: RBX, 
 6. To ensure that a signal handler can be properly called without crashing a process, you have to do the following additional setup in your implemented sigaction function as follows (illustrated in C language):
 ```
 long sigaction(int how, struct sigaction *nact, struct sigaction *oact) {
-...
-nact->sa_flags |= SA_RESTORER;
-nact->sa_restorer = /* your customized restore routine, e.g., __myrt */;
-ret = sys_rt_sigaction(how, nact, oact, sizeof(sigset_t));
-...
+    ...
+    nact->sa_flags |= SA_RESTORER;
+    nact->sa_restorer = /* your customized restore routine, e.g., __myrt */;
+    ret = sys_rt_sigaction(how, nact, oact, sizeof(sigset_t));
+    ...
 }
 ```
 The implementation of the __myrt function is simply making a system call to sigreturn (rax = 15).
@@ -147,9 +147,9 @@ The implementation of the __myrt function is simply making a system call to sigr
 
 8. The assembly instructions we used in this homework are pretty simple. All the required instructions have been introduced in the class. Here we enumerate the possible required assembly instructions for this homework.
 ```
-add call cmp inc jge jmp jne
-jnz lea mov neg or pop push
-ret sub syscall xor
+add      call     cmp      inc      jge     jmp      jne
+jnz      lea      mov      neg      or      pop      push
+ret      sub      syscall  xor
 ```
 
 9. Please ensure that your header file (libmini.h) exports additional required macros, constants, data types, and function prototypes. You may refer to this file to see what are the minimal requirements that would be used in the sample test codes.
