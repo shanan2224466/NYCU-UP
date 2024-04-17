@@ -8,16 +8,12 @@ ASMFLAGS = -f elf64 -DYASM -D__x86_64__ -DPIC
 
 OBJECTS = start.o libmini64.o
 PROGRAMS = write1 alarm1 alarm2 alarm3 jmp1
-SOURCES = $(PROGRAMS:=.c)
 
-.PHONY: all clean $(PROGRAMS) test
+.PHONY: all clean
 
-all: libmini.so $(PROGRAMS) start.o
+all: libmini.so start.o
 
-start.o: start.asm
-	$(ASM) $(ASMFLAGS) $< -o $@
-
-libmini64.o: libmini64.asm
+%.o: %.asm
 	$(ASM) $(ASMFLAGS) $< -o $@
 
 libmini.so: libmini64.o libmini.c
