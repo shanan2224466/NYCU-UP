@@ -27,7 +27,7 @@ In this homework, you have to implement a simple instruction-level debugger that
 
 In a debugging process, you have to load a program first, configure the debugger, and start debugging by running the program. A debugger command may be only used in certain "states." The states include **any**, **not loaded**, **loaded**, and **running**. State **any** means that a command can be used at any time. State **not loaded** means that a command can only be used when a program is not loaded. State **loaded** means that a command can only be used when a program is loaded. State **running** means that a command can only be used when the program is running. The following is the state flow chart.
 
-![flow chart](../fig/Image%2001.png)
+![flow chart](fig/Image%2001.png)
 
 The details of each command are explained below. We use brackets right after a command to enclose the list of the state(s) that the command should support.
 
@@ -229,11 +229,11 @@ sdb>
 ### # Sample scripts passed to your homework (with -s option) can be found here!
 Please note that the debugger is exited directly after the script is executed.
 
-* [hello1.txt](test/hello1.txt) (6%)
-* [hello2.txt](test/hello2.txt) (6%)
-* [hello3.txt](test/hello3.txt) (6%)
-* [hello4.txt](test/hello4.txt) (6%)
-* [guess.txt](test/guess.txt) (6%)
+* [hello1.txt](scripts/hello1.txt) (6%)
+* [hello2.txt](scripts/hello2.txt) (6%)
+* [hello3.txt](scripts/hello3.txt) (6%)
+* [hello4.txt](scripts/hello4.txt) (6%)
+* [guess.txt](scripts/guess.txt) (6%)
 
 Two examples of running scripts are given as follows.
 
