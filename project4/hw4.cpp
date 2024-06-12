@@ -47,6 +47,7 @@ void set(string, unsigned long long);
 void si();
 void dump(string);
 void start();
+void get(string);
 void getregs();
 
 struct Breakpoint {
@@ -103,6 +104,17 @@ int checkstat(int stat) {
 			}
 	}
 	return 0;
+}
+
+Breakpoint* findbp(unsigned long long address) {
+	Breakpoint *tmp = bpList;
+	while (tmp != nullptr) {
+		if (tmp->addr == address) {
+			return tmp;
+		}
+		tmp = tmp->next;
+	}
+	return nullptr;
 }
 
 uint8_t findbyte(unsigned long long address) {
@@ -171,40 +183,53 @@ unsigned long long strToULL(const string &str) {
 }
 
 void checkbp(unsigned long long rip) {
-	Breakpoint *tmp = bpList;
-	while (tmp != nullptr) {
-		if (tmp->addr == rip) {
-			set("rip", rip);
-			poketext(rip, tmp->byte);
-			// if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
-			// int status;
-			// waitpid(p.child, &status, 0);
-			si();
-			poketext(tmp->addr, 0xcc);
-			return;
-		}
-		tmp = tmp->next;
+	Breakpoint *match = findbp(rip);
+	if (match != nullptr) {
+		cout << "matched" << endl;
+		poketext(rip, match->byte);
+		if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
+		int status;
+		waitpid(p.child, &status, 0);
+		poketext(match->addr, 0xcc);
 	}
+	return;
+	// Breakpoint *tmp = bpList;
+	// while (tmp != nullptr) {
+	// 	if (tmp->addr == rip) {
+	// 		// set("rip", rip);
+	// 		poketext(rip, tmp->byte);
+	// 		if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
+	// 		int status;
+	// 		waitpid(p.child, &status, 0);
+	// 		// si();
+	// 		poketext(tmp->addr, 0xcc);
+	// 		return;
+	// 	}
+	// 	tmp = tmp->next;
+	// }
 }
 
 int capstone(unsigned long long &rip) {
+	/* read code */
+	long ret = peektext(rip);
+	uint8_t *ptr = (uint8_t*) &ret;
+	for (int j = 0; j < 8; j++) {
+		Breakpoint *match;
+		if (ptr[j] == 0xcc) {
+			match = findbp(rip + j);
+			ptr[j] = match->byte;
+			// ptr[j] = findbyte(rip + j);
+		}
+	}
+	vector<uint8_t> code;
+	code.insert(code.end(), ptr, ptr + sizeof(ret));
+
+	/* disasm code */
 	csh handle = 0;
 	cs_insn *insn;
 	size_t count;
 	if (cs_open(CS_ARCH_X86, CS_MODE_64, &handle) != CS_ERR_OK) ERR_QUIT("CS_OPEN");
 
-	/* read code */
-	vector<uint8_t> code;
-	long ret = peektext(rip);
-	uint8_t *ptr = (uint8_t*) &ret;
-	for (int j = 0; j < 8; j++) {
-		if (ptr[j] == 0xcc) {
-			ptr[j] = findbyte(rip + j);
-		}
-	}
-	code.insert(code.end(), ptr, ptr + sizeof(ret));
-
-	/* disasm code */
 	if ((count = cs_disasm(handle, code.data(), code.size(), rip, 1, &insn)) > 0) {
 		for (size_t j = 0; j < count; j++) {
 			if (insn[j].address >= p.textEnd || insn[j].address < p.textBeg) {
@@ -233,20 +258,26 @@ void wait() {
 	int status;
 	waitpid(p.child, &status, 0);
 	if (WIFSTOPPED(status)) {
-		Breakpoint *tmp = bpList;
 		if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-		while (tmp != nullptr) {
-			if (tmp->addr == p.regs.rip - 1) {
-				catchbp = true;
-			}
-			tmp = tmp->next;
-		}
-		// cout << catchbp << endl;
-		int signal = WSTOPSIG(status);
+		Breakpoint *match = findbp(p.regs.rip - 1);
+		cout << hex << p.regs.rip << endl;
+		if (match != nullptr) 
+		{	catchbp = true;
+			cout << "matched" << endl;}
+		// Breakpoint *tmp = bpList;
+		// while (tmp != nullptr) {
+		// 	if (tmp->addr == p.regs.rip - 1) {m
+		// 		catchbp = true;
+		// 	}
+		// 	tmp = tmp->next;
+		// }
+
+		// int signal = WSTOPSIG(status);
 		if (catchbp) {
 			cout << "** breakpoint @    ";
-			if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
+			// if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
 			p.regs.rip--;
+			set("rip", p.regs.rip);
 			capstone(p.regs.rip);
 			catchbp = false;
 		}
@@ -265,16 +296,16 @@ void breakpoint(unsigned long long addr) {
 	if (bpList == nullptr)
 		bpList = newbp;
 	else {
-		Breakpoint *tmp = bpList;
-		while (tmp->next && tmp->addr != addr) {
-            tmp = tmp->next;
+		Breakpoint *last = bpList;
+		while (last->next && last->addr != addr) {
+            last = last->next;
         }
-        if (tmp->addr == addr) {
+        if (last->addr == addr) {
             cerr << "** the same address already has a breakpoint." << endl;
             delete newbp;
             return;
         }
-		tmp->next = newbp;
+		last->next = newbp;
 	}
 }
 
@@ -282,40 +313,42 @@ void cont() {
 	if (checkstat(RUNNING) < 0) return;
 
 	if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-	checkbp(p.regs.rip - 1);
+	checkbp(p.regs.rip);
 	if (ptrace(PTRACE_CONT, p.child, 0, 0) < 0) ERR_QUIT("ptrace(CONT)");
 	wait();
 }
 
-void deletebp(string index) {
+void deletebp(size_t index) {
 	if (checkstat(RUNNING) < 0) return;
 
 	long ret;
-	Breakpoint *tmp = bpList, *del;
-	if (strToULL(index) == 0) {
+	Breakpoint *match = bpList, *del;
+	if (index == 0) {
 		if (bpList == nullptr) {
 			cerr << "** breakpoint 0 does not exist." << endl;
 			return;
 		}
-		bpList = tmp->next;
-		del = tmp;
+		bpList = match->next;
+		del = match;
 	}
 	else {
-		for (size_t i = 0; i < strToULL(index)-1; i++) {
-			if (!tmp) {
-				cerr << "** breakpoint " << strToULL(index) << " does not exist." << endl;
+		for (size_t i = 0; i < index - 1; i++) {
+			if (!match) {
+				cerr << "** breakpoint " << index << " does not exist." << endl;
 				return;
 			}
-			tmp = tmp->next;
+			match = match->next;
 		}
-		del = tmp->next;
-		tmp->next = tmp->next->next;
+		del = match->next;
+		match->next = match->next->next;
 	}
-	ret = peektext(tmp->addr);
-	if (ptrace(PTRACE_POKETEXT, p.child, del->addr, (ret & 0xffffffffffffff00) | del->byte) < 0) ERR_QUIT("PTRACE(POKETEXT)");
+	poketext(del->addr, del->byte);
+	// ret = peektext(match->addr);
+	// cout << hex << ret << endl;
+	// if (ptrace(PTRACE_POKETEXT, p.child, del->addr, (ret & 0xffffffffffffff00) | del->byte) < 0) ERR_QUIT("PTRACE(POKETEXT)");
 	delete(del);
 
-	cout << "** breakpoint " << strToULL(index) << " deleted." << endl;
+	cout << "** breakpoint " << index << " deleted." << endl;
 }
 
 void disasm(string addr) {
@@ -464,7 +497,10 @@ void si() {
 	if (checkstat(RUNNING) < 0) return;
 
 	if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-	checkbp(p.regs.rip - 1);
+	cout << hex << p.regs.rip << endl;
+	checkbp(p.regs.rip);
+	if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
+	cout << hex << p.regs.rip << endl;
 	if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
 	wait();
 }
@@ -490,7 +526,7 @@ void start() {
 		ptrace(PTRACE_SETOPTIONS, p.child, 0, PTRACE_O_EXITKILL);
 		cout << "** pid " << dec << p.child << endl;
 
-		/* patch breakpoint */
+		/* patch breakpoints */
 		if (bpList != nullptr) {
 			Breakpoint *tmp = bpList;
 			while (tmp) {
@@ -528,7 +564,7 @@ void debugger() {
 		}
 		else if (comm[0] == "delete") {
 			if (!comm[1].empty())
-				deletebp(comm[1]);
+				deletebp(strToULL(comm[1]));
 			else
 				cerr << "** Syntax: delete [index of breakpoint]" << endl;
 		}
