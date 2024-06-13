@@ -38,17 +38,12 @@
 
 using namespace std;
 
-bool catchbp = false;
-int state = NOTLOAD;
-ifstream script;
-
 void disasm(string);
 void set(string, unsigned long long);
 void si();
 void dump(string);
 void start();
-void get(string);
-void getregs();
+void getregs(bool);
 
 struct Breakpoint {
 	uint8_t byte;
@@ -64,6 +59,10 @@ struct Program {
 	struct user_regs_struct regs;
 	unsigned long long textBeg, textEnd;
 }p;
+
+int state = NOTLOAD;
+ifstream script;
+Breakpoint *current;
 
 map<string, int> regMap = {
 	{"r15", 0},
@@ -115,17 +114,6 @@ Breakpoint* findbp(unsigned long long address) {
 		tmp = tmp->next;
 	}
 	return nullptr;
-}
-
-uint8_t findbyte(unsigned long long address) {
-	Breakpoint *tmp = bpList;
-	while (tmp != nullptr) {
-		if (tmp->addr == address) {
-			return tmp->byte;
-		}
-		tmp = tmp->next;
-	}
-	return 0;
 }
 
 long peektext(unsigned long long addr) {
@@ -182,33 +170,6 @@ unsigned long long strToULL(const string &str) {
 	return value;
 }
 
-void checkbp(unsigned long long rip) {
-	Breakpoint *match = findbp(rip);
-	if (match != nullptr) {
-		cout << "matched" << endl;
-		poketext(rip, match->byte);
-		if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
-		int status;
-		waitpid(p.child, &status, 0);
-		poketext(match->addr, 0xcc);
-	}
-	return;
-	// Breakpoint *tmp = bpList;
-	// while (tmp != nullptr) {
-	// 	if (tmp->addr == rip) {
-	// 		// set("rip", rip);
-	// 		poketext(rip, tmp->byte);
-	// 		if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
-	// 		int status;
-	// 		waitpid(p.child, &status, 0);
-	// 		// si();
-	// 		poketext(tmp->addr, 0xcc);
-	// 		return;
-	// 	}
-	// 	tmp = tmp->next;
-	// }
-}
-
 int capstone(unsigned long long &rip) {
 	/* read code */
 	long ret = peektext(rip);
@@ -218,7 +179,6 @@ int capstone(unsigned long long &rip) {
 		if (ptr[j] == 0xcc) {
 			match = findbp(rip + j);
 			ptr[j] = match->byte;
-			// ptr[j] = findbyte(rip + j);
 		}
 	}
 	vector<uint8_t> code;
@@ -254,33 +214,30 @@ int capstone(unsigned long long &rip) {
 	return 0;
 }
 
+void handlebp(unsigned long long addr) {
+    current = findbp(addr);
+    if (current != nullptr) {
+        poketext(current->addr, 0xcc);
+        cout << "** breakpoint @ ";
+        p.regs.rip--;
+        set("rip", p.regs.rip);
+        capstone(p.regs.rip);
+    }
+}
+
 void wait() {
 	int status;
 	waitpid(p.child, &status, 0);
 	if (WIFSTOPPED(status)) {
-		if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-		Breakpoint *match = findbp(p.regs.rip - 1);
-		cout << hex << p.regs.rip << endl;
-		if (match != nullptr) 
-		{	catchbp = true;
-			cout << "matched" << endl;}
-		// Breakpoint *tmp = bpList;
-		// while (tmp != nullptr) {
-		// 	if (tmp->addr == p.regs.rip - 1) {m
-		// 		catchbp = true;
-		// 	}
-		// 	tmp = tmp->next;
-		// }
+		getregs(0);
 
-		// int signal = WSTOPSIG(status);
-		if (catchbp) {
-			cout << "** breakpoint @    ";
-			// if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-			p.regs.rip--;
-			set("rip", p.regs.rip);
-			capstone(p.regs.rip);
-			catchbp = false;
-		}
+		if (findbp(p.regs.rip) != nullptr) {
+            if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
+            waitpid(p.child, &status, 0);
+            getregs(0);
+        }
+
+        handlebp(p.regs.rip - 1);
 	}
 	else if (WIFEXITED(status)) {
 		cout << "** child process " << dec << p.child << " terminiated normally (code " << WTERMSIG(status) << ")" << endl;
@@ -312,8 +269,10 @@ void breakpoint(unsigned long long addr) {
 void cont() {
 	if (checkstat(RUNNING) < 0) return;
 
-	if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-	checkbp(p.regs.rip);
+	getregs(0);
+	if (findbp(p.regs.rip) != nullptr)
+		poketext(p.regs.rip, current->byte);
+
 	if (ptrace(PTRACE_CONT, p.child, 0, 0) < 0) ERR_QUIT("ptrace(CONT)");
 	wait();
 }
@@ -343,9 +302,6 @@ void deletebp(size_t index) {
 		match->next = match->next->next;
 	}
 	poketext(del->addr, del->byte);
-	// ret = peektext(match->addr);
-	// cout << hex << ret << endl;
-	// if (ptrace(PTRACE_POKETEXT, p.child, del->addr, (ret & 0xffffffffffffff00) | del->byte) < 0) ERR_QUIT("PTRACE(POKETEXT)");
 	delete(del);
 
 	cout << "** breakpoint " << index << " deleted." << endl;
@@ -384,24 +340,28 @@ void dump(string addr) {
 	}
 }
 
-void get(string reg) {
-	if (checkstat(RUNNING) < 0) return;
+unsigned long long get(string regName, bool print) {
+	if (checkstat(RUNNING) < 0) return -1;
 
 	errno = 0;
-	unsigned long long reg_v = ptrace(PTRACE_PEEKUSER, p.child, sizeof(long) * regMap[reg], NULL);
+	unsigned long long reg = ptrace(PTRACE_PEEKUSER, p.child, sizeof(long) * regMap[regName], NULL);
 	ERR_CHECK("PTRACE(PEEKUSER)");
-	cout << reg << " = " << dec << reg_v << " (0x" << hex << reg_v << ")" << endl;
-	return;
+	if (print) {
+		cout << regName << " = " << dec << reg << " (0x" << hex << reg << ")" << endl;
+	}
+	return reg;
 }
 
-void getregs() {
+void getregs(bool print) {
 	if (checkstat(RUNNING) < 0) return;
 
 	if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-	cout << "RAX " << left << setw(SETW) << dec << p.regs.rax << "RBX " << left << setw(SETW) << p.regs.rbx << "RCX " << left << setw(SETW) << p.regs.rdx << "RDX " << left << setw(SETW) << p.regs.rdx << endl;
-	cout << "R8  " << left << setw(SETW) << p.regs.r8  << "R9  " << left << setw(SETW) << p.regs.r9  << "R10 " << left << setw(SETW) << p.regs.r10 << "R11 " << left << setw(SETW) << p.regs.r11 << endl;
-	cout << "RDI " << left << setw(SETW) << p.regs.rdi << "RSI " << left << setw(SETW) << p.regs.rsi << "RBP " << left << setw(SETW) << p.regs.rbp << "RSP " << left << setw(SETW) << hex << p.regs.rsp << endl;
-	cout << "RIP " << left << setw(SETW) << hex << p.regs.rip << "FLAGS " << setfill('0') << setw(SETW - 2) << p.regs.rbx << setfill(' ') << right << endl;
+	if (print) {
+		cout << "RAX " << left << setw(SETW) << dec << p.regs.rax << "RBX " << left << setw(SETW) << p.regs.rbx << "RCX " << left << setw(SETW) << p.regs.rdx << "RDX " << left << setw(SETW) << p.regs.rdx << endl;
+		cout << "R8  " << left << setw(SETW) << p.regs.r8  << "R9  " << left << setw(SETW) << p.regs.r9  << "R10 " << left << setw(SETW) << p.regs.r10 << "R11 " << left << setw(SETW) << p.regs.r11 << endl;
+		cout << "RDI " << left << setw(SETW) << p.regs.rdi << "RSI " << left << setw(SETW) << p.regs.rsi << "RBP " << left << setw(SETW) << p.regs.rbp << "RSP " << left << setw(SETW) << hex << p.regs.rsp << endl;
+		cout << "RIP " << left << setw(SETW) << hex << p.regs.rip << "FLAGS " << setfill('0') << setw(SETW - 2) << p.regs.rbx << setfill(' ') << right << endl;
+	}
 }
 
 void help() {
@@ -496,11 +456,10 @@ void set(string reg, unsigned long long value) {
 void si() {
 	if (checkstat(RUNNING) < 0) return;
 
-	if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-	cout << hex << p.regs.rip << endl;
-	checkbp(p.regs.rip);
-	if (ptrace(PTRACE_GETREGS, p.child, NULL, &p.regs) < 0) ERR_QUIT("ptrace(GETREGS)");
-	cout << hex << p.regs.rip << endl;
+	getregs(0);
+	if (findbp(p.regs.rip) != nullptr)
+		poketext(p.regs.rip, current->byte);
+
 	if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
 	wait();
 }
@@ -615,13 +574,13 @@ void debugger() {
 		}
 		else if (comm[0] == "get" || comm[0] == "g") {
 			if (!comm[1].empty())
-				get(comm[1]);
+				get(comm[1], 1);
 			else {
 				cerr << "** Syntax: get [reg name] (or g [reg name])" << endl;
 			}
 		}
 		else if (comm[0] == "getregs") {
-			getregs();
+			getregs(1);
 		}
 		else if (comm[0] == "help" || comm[0] == "h") {
 			help();
