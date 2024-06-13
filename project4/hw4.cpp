@@ -38,10 +38,7 @@
 
 using namespace std;
 
-void disasm(string);
 void set(string, unsigned long long);
-void si();
-void dump(string);
 void start();
 void getregs(bool);
 
@@ -231,6 +228,7 @@ void wait() {
 	if (WIFSTOPPED(status)) {
 		getregs(0);
 
+		/* if si() encounter a breakpoint */
 		if (findbp(p.regs.rip) != nullptr) {
             if (ptrace(PTRACE_SINGLESTEP, p.child, 0, 0) < 0) ERR_QUIT("ptrace(SINGLESTEP)");
             waitpid(p.child, &status, 0);
@@ -248,6 +246,10 @@ void wait() {
 void breakpoint(unsigned long long addr) {
 	if (checkstat(RUNNING) < 0) return;
 
+	if (addr < p.textBeg || addr > p.textEnd) {
+		cerr << "** breakpoint address is not allowed. (0x" << hex << p.textBeg << " - 0x" << p.textEnd << ")" << endl;
+		return;
+	}
 	long ret = poketext(addr, 0xcc);
 	Breakpoint *newbp = new Breakpoint(ret, addr);
 	if (bpList == nullptr)
@@ -399,15 +401,18 @@ void load() {
 		return;
 	}
 
+	/* read ELF header */
 	Elf64_Ehdr hdr;
 	p.file.open(p.path);
 	p.file.read((char*)&hdr, sizeof(Elf64_Ehdr));
 	cout << "** program \'" << p.path << "\' loaded. entry point 0x" << hex << hdr.e_entry << endl;
 
+	/* read section header table */
 	Elf64_Shdr shdr[hdr.e_shnum];
 	p.file.seekg(hdr.e_shoff);
 	p.file.read((char*)&shdr, sizeof(shdr));
 
+	/* read section header string table */
 	Elf64_Shdr strtab = shdr[hdr.e_shstrndx];
 	char table[strtab.sh_size];
 	p.file.seekg(strtab.sh_offset);
