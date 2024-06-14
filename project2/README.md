@@ -12,7 +12,7 @@ The output of your homework is required to follow the spec strictly. The TAs wil
 We will compile your homework by typing 'make' in your homework directory. You have to ensure your Makefile produces the executable `logger` and the shared object `logger.so.` Please make sure your Makefile works and the output executable name is correct before submitting your homework. The logger may be implemented as a shell script. In that case, you can simply pack the shell script in your submitted file.
 
 Please pack your C/C++ code and Makefile into a `zip` archive. The directory structure should follow the below illustration. The id is your student id. Please note that you don't need to enclose your id with the braces.
-```
+```shell script=
 {id}_hw2.zip
 └── {id}_hw2/
     ├── Makefile
@@ -23,7 +23,7 @@ You have to submit your homework via the E3 system. Scores will be graded based 
 ### Requirements
 #### Program Arguments
 Your program should work with the following arguments:
-```
+```shell script=
 usage: ./logger [-o file] [-p sopath] [--] cmd [cmd args ...]
     -p: set the path to logger.so, default = ./logger.so
     -o: print output to file, print to "stderr" if no file specified
@@ -32,7 +32,7 @@ usage: ./logger [-o file] [-p sopath] [--] cmd [cmd args ...]
 If an invalid argument is passed to the logger, the above message should be displayed.
 #### Monitored file access activities
 The list of monitored library calls is shown below. It covers several functions we have introduced in the class.
-```
+```shell script=
 chmod    chown    close    creat    fclose    fopen    fread    fwrite    open    read    remove    rename    tmpfile    write
 ```
 
@@ -49,7 +49,7 @@ You have to dump the library calls as well as the corresponding parameters and t
 Output strings should be quoted with double quotes.
 
 A sample output of the homework is given below. More examples can be found in the "Sample Output" section.
-```
+```shell script=
 $ ./logger ./sample
 [logger] creat("/home/ta/hw2/tmp/aaaa", 600) = 3
 [logger] chmod("/home/ta/hw2/tmp/aaaa", 666) = 0
@@ -73,7 +73,7 @@ sample done.
 ```
 ### Sample Output
 Some basic usage.
-```
+```shell script=
 $ ./logger
 no command given.
 
@@ -107,7 +107,7 @@ $ cat ls_al.txt
 [logger] fclose("/dev/pts/7") = 0
 ```
 Sample output for `exec()` or `system()` .
-```
+```shell script=
 $ ./logger -o bash.txt -- bash
 ta@lab:~/hw2$ ls -al
 ... [output of `ls -al`] ...
@@ -136,7 +136,7 @@ $ cat bash.txt
 ```
 ### Hints
 When implementing your homework, you may inspect symbols used by an executable. We have mentioned that you cannot see any symbols if they were symbol stripped (using `strip` command). However, you may consider working with the `readelf` command. For example, we can check the symbols that are unknown to the binary:
-```
+```shell script=
 $ nm /usr/bin/wget
 nm: /usr/bin/wget: no symbols
 $ readelf --syms /usr/bin/wget | grep open

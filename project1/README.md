@@ -12,7 +12,7 @@ Your program should work without any arguments. In the meantime, your program ha
 - `-f REGEX` : a regular expression (REGEX) filter for filtering filenames.
 
 A sample output from this homework is demonstrated as follows:
-```
+```shell script=
 $ ./hw1 | head -n 20
 COMMAND                         PID        USER        FD      TYPE         NODE  NAME
 systemd                           1        root       cwd   unknown               /proc/1/cwd (Permission denied)
@@ -110,7 +110,7 @@ For students who programming with C++, consider working with `regex_search()` in
 We will compile your homework by simply typing 'make' in your homework directory. You have to ensure your Makefile produces the executable hw1. Please ensure your Makefile works and the output executable name is correct before submitting your homework.
 
 Please pack your C/C++ code and Makefile into a zip archive. The directory structure should follow the below illustration. The id is your student id. Please note that you don't need to enclose your id with the braces.
-```
+```shell script=
 {id}_hw1.zip
 └── {id}_hw1/
 ├── Makefile
@@ -128,7 +128,7 @@ implementation.
 Your program has to order the output lines by performing a numeric sort against process ID (PIDs). We will test your program with and without root permission. If an operation does not have sufficient permission to perform, you have to print out `Permission denied` message.
 
 #### Run the command without root permission
-```
+```shell script=
 $ ./hw1| head -n 20
 COMMAND                         PID        USER        FD      TYPE         NODE  NAME
 systemd                           1        root       cwd   unknown               /proc/1/cwd (Permission denied)
@@ -152,7 +152,7 @@ ksoftirqd/0                       7        root       rtd   unknown             
 ksoftirqd/0                       7        root       txt   unknown               /proc/7/exe (Permission denied)
 ```
 #### Run the command with root permission
-```
+```shell script=
 $ sudo ./hw1| head -n 20
 COMMAND                         PID        USER        FD      TYPE         NODE  NAME
 systemd                           1        root       cwd       DIR            2  /
