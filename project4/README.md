@@ -258,6 +258,12 @@ Show me the key: Bingo!
 $
 ```
 
+## Grading
+* There will be seven advanced scripts used to test your homework, each worth 10 points.
+* TAs will use the diff tool to compare the output of your program against the output of the `~/ta/hw4/ans_hw4` (except for messages prefixed with "**"). When comparing the outputs, continuous spaces and tabs in the output are merged into a single space character.
+* You may run the executable from the TAs (`~/ta/hw4/ans_hw4`) and check its output for any unclear parts described in the spec. Your program output should output the same content to the sample executable except for debugging messages (messages prefixed with "**") and randomized system memory addresses.
+* We have provided a sample implementation with five sample scripts. Please access our online sandbox (tested only with Chrome, Firefox, and Edge; Safari is not supported). You can find everything in the directory `~/ta/hw4`. Note that you can only access the service within campus networks or via a valid VPN network.
+      * You can use `-d` in `testcase_hello64.sh` and `testcase_guess.sh` to look at the diff result, and the result will save to `/tmp/testcase_hello{i}_diff` and `/tmp/testcase_guess_diff` respectively. However, we still suggest checking it carefully by yourself to avoid any mistakes ignored by the additional diff filter.
 
 
 ## Hints
