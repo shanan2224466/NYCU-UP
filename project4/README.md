@@ -1,5 +1,5 @@
 # Advanced Programming in the UNIX Environment HW4
-Due: Jun 6, 2022 Extended to Jun 13, 2022 (hard-deadline)
+Due: Jun 6, 2022, Prof: Chun-Ying Huang
 
 ## Simplified Scriptable Instruction Level Debugger
 In this homework, you have to implement a simple instruction-level debugger that allows a user to debug a program interactively at the assembly instruction level. You can implement the debugger by using the ptrace interface. The commands you have to implement are summarized as follows:
