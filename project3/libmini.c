@@ -69,7 +69,6 @@ pid_t fork(void) {
 
 void exit(int error_code) {
 	sys_exit(error_code);
-	/* never returns? */
 }
 
 char *getcwd(char *buf, size_t size) {
