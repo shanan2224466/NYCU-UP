@@ -50,7 +50,7 @@ You have to submit your homework via the E3 system. Scores will be graded based 
 ### Basic Test Cases (70%)
 We will implement several simple test programs and link them against your mini C library. Here are some sample test cases: write1.c, alarm1.c, alarm2.c, alarm3.c, and jmp1.c.
 #### write1 (10%)
-The commands to assemble, compile, and link [write1.c](test/write1.c), as well as the corresponding runtime output are pasted below.
+The commands to assemble, compile, and link [write1.c](write1.c), as well as the corresponding runtime output are pasted below.
 ```shell script=
 $ make write1
 gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI write1.c
@@ -61,7 +61,7 @@ $ LD_LIBRARY_PATH=. ./write1
 Hello world!
 ```
 #### alarm1 (15%)
-The commands to assemble, compile, and link [alarm1.c](test/alarm1.c), as well as the corresponding runtime output are pasted below.
+The commands to assemble, compile, and link [alarm1.c](alarm1.c), as well as the corresponding runtime output are pasted below.
 ```shell script=
 $ make alarm1
 gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI alarm1.c
@@ -72,7 +72,7 @@ $ LD_LIBRARY_PATH=. ./alarm1
 Alarm clock
 ```
 #### alarm2 (15%)
-The commands to assemble, compile, and link [alarm2.c](test/alarm2.c), as well as the corresponding runtime output are pasted below.
+The commands to assemble, compile, and link [alarm2.c](alarm2.c), as well as the corresponding runtime output are pasted below.
 ```shell script=
 $ make alarm2
 gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI alarm2.c
@@ -83,7 +83,7 @@ $ LD_LIBRARY_PATH=. ./alarm2
 sigalrm is pending.
 ```
 #### alarm3 (15%)
-The commands to assemble, compile, and link [alarm3.c](test/alarm3.c), as well as the corresponding runtime output are pasted below.
+The commands to assemble, compile, and link [alarm3.c](alarm3.c), as well as the corresponding runtime output are pasted below.
 ```shell script=
 $ make alarm3
 gcc -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI alarm3.c
@@ -93,7 +93,7 @@ $ LD_LIBRARY_PATH=. ./alarm3
 ^Csigalrm is pending.
 ```
 #### jmp1 (15%)
-The commands to assemble, compile, and link [jmp1.c](test/jmp1.c), as well as the corresponding runtime output are pasted below.
+The commands to assemble, compile, and link [jmp1.c](jmp1.c), as well as the corresponding runtime output are pasted below.
 ```shell script=
 $ make jmp1
 gcc -o jmp1.o -c -g -Wall -fno-stack-protector -nostdlib -I. -I.. -DUSEMINI jmp1.c

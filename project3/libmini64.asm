@@ -58,7 +58,7 @@ extern	errno
 	gensys 37, alarm
 	gensys 127, rt_sigpending
 
-	; https://hackmd.io/@sysprog/c-function
+	; https://hackmd.io/@sysprog/c-function#Stack
 
 	global setjmp:function
 setjmp:
